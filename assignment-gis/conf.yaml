@@ -1,0 +1,15 @@
+server:
+  rootPath: /service/*
+  applicationContextPath: /
+  applicationConnectors:
+    - type: http
+      port: 9100
+      outputBufferSize: 256KiB
+  adminConnectors:
+    - type: http
+      port: 9101
+db:
+  host: localhost
+  port: 5432
+  username: postgres
+  password: ""
