@@ -21,6 +21,10 @@ import sk.fiit.pdt.matus.assignment_gis.config.DatabaseConfiguration;
 
 public class DbConnection implements Managed {
 	
+	public static interface SQLValueBinder {
+		public void bind(PreparedStatement st) throws SQLException;
+	}
+	
 	private static final Logger LOGGER = LoggerFactory.getLogger(DbConnection.class);
 
 	private final DatabaseConfiguration dbConf;
@@ -50,9 +54,9 @@ public class DbConnection implements Managed {
 		connection.close();
 	}
 	
-	public RowSetDynaClass execute(String sql, Consumer<PreparedStatement> binder) throws SQLException {
+	public RowSetDynaClass execute(String sql, SQLValueBinder binder) throws SQLException {
 		try (PreparedStatement st = connection.prepareStatement(sql)) {
-			binder.accept(st);
+			binder.bind(st);
 			try (ResultSet rs = st.executeQuery()) {
 				return new RowSetDynaClass(rs);
 			}
@@ -62,7 +66,7 @@ public class DbConnection implements Managed {
 		}
 	}
 	
-	public DynaBean getOne(String sql, Consumer<PreparedStatement> binder) throws SQLException {
+	public DynaBean getOne(String sql, SQLValueBinder binder) throws SQLException {
 		RowSetDynaClass res = execute(sql, binder);
 		List<DynaBean> rows = res.getRows();
 		if (rows.size() > 0) {
@@ -72,7 +76,7 @@ public class DbConnection implements Managed {
 		}
 	}
 	
-	public Stream<DynaBean> getStream(String sql, Consumer<PreparedStatement> binder) throws SQLException {
+	public Stream<DynaBean> getStream(String sql, SQLValueBinder binder) throws SQLException {
 		return execute(sql, binder).getRows().stream();
 	}
 
