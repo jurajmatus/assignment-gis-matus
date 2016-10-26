@@ -11,5 +11,6 @@ server:
 db:
   host: localhost
   port: 5432
-  username: postgres
+  username: gisuser
   password: ""
+  database: project

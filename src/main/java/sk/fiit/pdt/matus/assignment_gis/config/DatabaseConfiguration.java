@@ -11,6 +11,8 @@ public class DatabaseConfiguration {
 	private String username;
 	
 	private String password;
+	
+	private String database;
 
 	@JsonProperty
 	public String getHost() {
@@ -50,6 +52,16 @@ public class DatabaseConfiguration {
 	@JsonProperty
 	public void setPassword(String password) {
 		this.password = password;
+	}
+
+	@JsonProperty
+	public String getDatabase() {
+		return database;
+	}
+
+	@JsonProperty
+	public void setDatabase(String database) {
+		this.database = database;
 	}
 	
 }
