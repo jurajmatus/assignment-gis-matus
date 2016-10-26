@@ -20,8 +20,20 @@ Build a map-based application, which lets the user see geo-based data on a map a
 
 Fill in (either in English, or in Slovak):
 
-**Application description**: `<fill in>`
+**Application description**:
 
-**Data source**: `<fill in>`
+The application shows waterways and waterareas in the west of Slovakia. Application allows filtering by waterway / waterarea type and by area.
 
-**Technologies used**: `<fill in>`
+**Data source**:
+
+Custom extract (west of Slovakia) was downloaded from [Mapzen](https://mapzen.com/data/metro-extracts) in .geojson format.
+Only files mapping waterareas and waterways were used. Import was done by ogr2ogr tool.
+
+
+**Technologies used**:
+
+[Mapbox](https://www.mapbox.com/) is used to serve map tiles.
+[Leaflet](http://leafletjs.com/) is used as a to display interactive map in the front-end client.
+[PostgreSQL](https://www.postgresql.org/) with [PostGIS](http://www.postgis.net/) extension is used an a database engine.
+[Dropwizard](http://www.dropwizard.io/0.9.0/docs/) is used as a framework for server application.
+
