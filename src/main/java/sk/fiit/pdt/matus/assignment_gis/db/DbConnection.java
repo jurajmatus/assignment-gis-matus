@@ -1,5 +1,6 @@
 package sk.fiit.pdt.matus.assignment_gis.db;
 
+import java.sql.Array;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -78,6 +79,14 @@ public class DbConnection implements Managed {
 	
 	public Stream<DynaBean> getStream(String sql, SQLValueBinder binder) throws SQLException {
 		return execute(sql, binder).getRows().stream();
+	}
+	
+	public Array arrayOfStrings(String... values) throws SQLException {
+		return connection.createArrayOf("text", values);
+	}
+	
+	public Array arrayOfStrings(List<String> values) throws SQLException {
+		return connection.createArrayOf("text", values.stream().toArray());
 	}
 
 }

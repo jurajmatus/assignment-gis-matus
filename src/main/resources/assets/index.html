@@ -5,13 +5,30 @@
 		<title>Waterarea finder</title>
 		
 		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.1/dist/leaflet.css" />
+		<link rel="stylesheet" href="lib/multirange.css" />
 		<link rel="stylesheet" href="main.css" />
 	</head>
 	<body>
 		<div id="map"></div>
 		
+		<div id="filters">
+			<div class="types">
+				<div><label><input type="checkbox" id="filter-types-active" />
+					Show only checked types</label></div>
+				<div id="filter-types-entries"></div>
+			</div>
+			<div class="area">
+				<div><label><input type="checkbox" id="filter-area-active" />
+					Show only waterways inside the specified area range</label></div>
+				<div id="filter-area">
+					<input type="range" multiple step="0.00001" name="filter-area" value="0,0" />
+				</div>
+			</div>
+		</div>
+		
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 		<script src="https://unpkg.com/leaflet@1.0.1/dist/leaflet.js"></script>
+		<script src="lib/multirange.js"></script>
 		<script src="main.js"></script>
 	</body>
 </html>

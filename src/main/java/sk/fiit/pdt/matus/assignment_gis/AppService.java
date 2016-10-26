@@ -10,7 +10,8 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import sk.fiit.pdt.matus.assignment_gis.config.AppConfiguration;
 import sk.fiit.pdt.matus.assignment_gis.db.DbConnection;
-import sk.fiit.pdt.matus.assignment_gis.services.WaterwayResource;
+import sk.fiit.pdt.matus.assignment_gis.services.QueryResource;
+import sk.fiit.pdt.matus.assignment_gis.services.StatisticsResource;
 
 public class AppService extends Application<AppConfiguration> {
 
@@ -33,7 +34,8 @@ public class AppService extends Application<AppConfiguration> {
 			}
 		});
 		
-		e.jersey().register(WaterwayResource.class);
+		e.jersey().register(QueryResource.class);
+		e.jersey().register(StatisticsResource.class);
 		
 		e.lifecycle().manage(new DbConnection(c.getDb(), dbConn -> {
 			e.jersey().register(new AbstractBinder() {
