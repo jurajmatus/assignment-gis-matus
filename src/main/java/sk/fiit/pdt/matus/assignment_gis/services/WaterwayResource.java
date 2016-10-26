@@ -5,6 +5,8 @@ import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -22,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import static java.util.stream.Collectors.toList;
 
 import sk.fiit.pdt.matus.assignment_gis.db.DbConnection;
+import sk.fiit.pdt.matus.assignment_gis.models.GeoJsonFeature;
 import sk.fiit.pdt.matus.assignment_gis.models.Rectangle;
 
 @Path("waterways")
@@ -32,7 +35,7 @@ public class WaterwayResource {
 	private final static ObjectMapper MAPPER = new ObjectMapper();
 	
 	private final static String SQL_FIND_IN_RECTANGLE = "SELECT"
-			+ " name, ST_AsGeoJson(wkb_geometry) geojson"
+			+ " name, type, ST_AsGeoJson(wkb_geometry) geometry"
 			+ " FROM geodata"
 			+ " WHERE ST_Intersects(wkb_geometry, ST_MakeEnvelope(?, ?, ?, ?, 4326))";
 	
@@ -43,7 +46,7 @@ public class WaterwayResource {
 	@Path("in-rectangle")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public List<GeoJsonObject> findInRectangle(Rectangle rectangle) throws SQLException {
+	public List<GeoJsonFeature> findInRectangle(Rectangle rectangle) throws SQLException {
 		
 		BigDecimal[] lats = {rectangle.getPoint1().getLat(), rectangle.getPoint2().getLat()};
 		BigDecimal[] lngs = {rectangle.getPoint1().getLng(), rectangle.getPoint2().getLng()};
@@ -56,13 +59,19 @@ public class WaterwayResource {
 			st.setBigDecimal(3, lngs[1]);
 			st.setBigDecimal(4, lats[1]);
 		}).map(row -> {
-			String geojson = row.get("geojson").toString();
+			
+			Function<String, String> getString = column -> Optional.ofNullable(row.get(column)).orElse("").toString();
+			
+			GeoJsonObject geometry;
 			try {
-				return MAPPER.readValue(geojson, GeoJsonObject.class);
+				geometry = MAPPER.readValue(getString.apply("geometry"), GeoJsonObject.class);
 			} catch (IOException e) {
-				LOGGER.warn("Corrupt geojson column received from db: {}", geojson, e);
+				LOGGER.warn("Problem mapping geojson geometry", e);
 				return null;
 			}
+			
+			return new GeoJsonFeature(getString.apply("name"), getString.apply("type"), geometry);
+			
 		}).filter(g -> g != null)
 			.collect(toList());
 		

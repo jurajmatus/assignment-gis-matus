@@ -8,25 +8,68 @@ var getRect = function() {
    return [topLeft, bottomRight];
 };
 
-var query = function(handler, point1, point2) {
-   $.ajax({
-      type: 'POST',
-      url: '/service/waterways/in-rectangle',
-      contentType: 'application/json',
-      data: JSON.stringify({
-         point1: point1,
-         point2: point2
-      }),
-      success: handler
-   });
-}
+var query = (function() {
+   
+   var running = false;
+   
+   return function(handler, point1, point2) {
+      if (running) {
+         return;
+      }
+      
+      running = true;
+      
+      $.ajax({
+         type: 'POST',
+         url: '/service/waterways/in-rectangle',
+         contentType: 'application/json',
+         data: JSON.stringify({
+            point1: point1,
+            point2: point2
+         }),
+         success: handler,
+         complete: function() {
+            running = false;
+         }
+      });
+   };
+   
+}());
 
 var queryCurrent = function(handler) {
    query.apply(window, [handler].concat(getRect()));
 };
 
+var insertMarkers = (function() {
+   
+   var lastMarkers = false;
+   
+   return function(data) {
+      
+      var markers = L.geoJSON(data, {
+         color: "#9999cc",
+         weight: 5,
+         opacity: 0.6,
+         onEachFeature: function(feature, layer) {
+            layer.bindPopup(feature.properties.name || 'Untitled ' + (feature.properties.type || ''));
+         }
+      });
+      
+      if (lastMarkers) {
+         lastMarkers.removeFrom(map);
+      }
+      
+      markers.addTo(map);
+      lastMarkers = markers;
+      
+   };
+   
+}());
+
 map.on('zoomlevelschange zoomend move', function(e) {
-   console.log(e.type);
+   queryCurrent(function(data) {
+      insertMarkers(data);
+   });
 });
 
 L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/outdoors-v10/tiles/256/{z}/{x}/{y}?'
