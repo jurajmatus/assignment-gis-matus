@@ -1,6 +1,15 @@
 var coordsFIIT = [48.153517, 17.072219];
-
 var map = L.map('map').setView(coordsFIIT, 13);
+
+var setPosition = function(position) {
+   map.setView([position.coords.latitude, position.coords.longitude], 13);
+};
+
+if ('geolocation' in navigator) {
+   navigator.geolocation.getCurrentPosition(setPosition, function(e) {
+      console.log(e);
+   });
+}
 
 var getRect = function() {
    var topLeft = map.containerPointToLatLng([0, 0]);

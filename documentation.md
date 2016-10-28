@@ -3,7 +3,7 @@
 This application shows waterways and waterareas in the west of Slovakia on a map. Most important features are:
 * filtering by area
 * filtering by waterway / waterarea type
-* (TODO) others?
+* (TODO) displaying the closest one of each type
 
 This is it in action:
 
@@ -21,7 +21,7 @@ It is displaying waterways and waterareas, thus the map style is based on the Ou
 
 All relevant frontend code is in `main.js` which is referenced from `index.html`.
 The frontend code is very simple, its only responsibilities are:
-- (TODO) detecting user's location, using the standard [web location API](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/Using_geolocation)
+- detecting user's location, using the standard [web location API](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/Using_geolocation)
 - displaying the filtering controls, driving the user interaction and calling the appropriate backend APIs
 - displaying geo features by overlaying the map with a geojson layer, the geojson is provided directly by backend APIs
 
