@@ -2,6 +2,7 @@ package sk.fiit.pdt.matus.assignment_gis.services;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.stream.Stream;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -50,6 +51,10 @@ public class StatisticsResource {
 		
 	}
 	
+	public Stream<String> getTypes() {
+		return types.stream();
+	}
+	
 	@GET
 	@Path("all")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -59,8 +64,8 @@ public class StatisticsResource {
 		ArrayNode typesArray = ret.putArray("types");
 		types.forEach(typesArray::add);
 		
-		ret.put("minArea", minArea);
-		ret.put("maxArea", maxArea);
+		ret.put("minArea", minArea * 0.7);
+		ret.put("maxArea", maxArea * 1.3);
 		
 		return ret;
 	}

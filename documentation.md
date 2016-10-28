@@ -1,9 +1,27 @@
 # Overview
 
 This application shows waterways and waterareas in the west of Slovakia on a map. Most important features are:
-* filtering by area
-* filtering by waterway / waterarea type
-* (TODO) displaying the closest one of each type
+* displaying all waterways / waterereas in the viewport by blue color
+  * possibility of filtering by area or waterway / waterarea type
+* displaying the closest waterway / waterarea to the center of the map by green color
+* (TODO) add 1 more
+
+Queries (? are placeholders for values):
+```sql
+SELECT id, name, type, ST_AsGeoJson(wkb_geometry) geometry
+FROM geodata
+WHERE (0 = ? OR ST_Intersects(wkb_geometry, ST_MakeEnvelope(?, ?, ?, ?, 4326)))"
+AND (0 = ? OR type = ANY (?))
+AND (0 = ? OR area >= ?)
+AND (0 = ? OR area <= ?)
+
+SELECT id, name, type, ST_AsGeoJson(wkb_geometry) geometry
+FROM geodata
+ST_Distance(wkb_geometry, ST_GeomFromText(?, 4326))
+ = (SELECT MIN(ST_Distance(wkb_geometry, ST_GeomFromText(?, 4326))) FROM geodata)
+```
+
+(TODO) add SQL queries
 
 This is it in action:
 

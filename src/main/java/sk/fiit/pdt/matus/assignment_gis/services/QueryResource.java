@@ -16,6 +16,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import org.apache.commons.beanutils.DynaBean;
 import org.geojson.GeoJsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +28,7 @@ import static java.util.stream.Collectors.toList;
 import sk.fiit.pdt.matus.assignment_gis.db.DbConnection;
 import sk.fiit.pdt.matus.assignment_gis.db.DbConnection.SQLValueBinder;
 import sk.fiit.pdt.matus.assignment_gis.models.GeoJsonFeature;
+import sk.fiit.pdt.matus.assignment_gis.models.LatLng;
 import sk.fiit.pdt.matus.assignment_gis.models.Rectangle;
 import sk.fiit.pdt.matus.assignment_gis.models.SearchCriteria;
 
@@ -37,13 +39,20 @@ public class QueryResource {
 	
 	private final static ObjectMapper MAPPER = new ObjectMapper();
 	
-	private final static String SQL_FIND_IN_RECTANGLE = "SELECT"
-			+ " name, type, ST_AsGeoJson(wkb_geometry) geometry"
+	private final static String SQL_BASE_SELECT = "SELECT"
+			+ " id, name, type, ST_AsGeoJson(wkb_geometry) geometry"
 			+ " FROM geodata"
-			+ " WHERE (0 = ? OR ST_Intersects(wkb_geometry, ST_MakeEnvelope(?, ?, ?, ?, 4326)))"
+			+ " WHERE";
+	
+	private final static String SQL_FIND_IN_RECTANGLE = SQL_BASE_SELECT
+			+ " (0 = ? OR ST_Intersects(wkb_geometry, ST_MakeEnvelope(?, ?, ?, ?, 4326)))"
 			+ " AND (0 = ? OR type = ANY (?))"
 			+ " AND (0 = ? OR area >= ?)"
 			+ " AND (0 = ? OR area <= ?)";
+	
+	private final static String SQL_FIND_CLOSEST = SQL_BASE_SELECT
+			+ " ST_Distance(wkb_geometry, ST_GeomFromText(?, 4326))"
+			+ " = (SELECT MIN(ST_Distance(wkb_geometry, ST_GeomFromText(?, 4326))) FROM geodata)";
 	
 	@Inject
 	private DbConnection dbConn;
@@ -111,27 +120,45 @@ public class QueryResource {
 		
 	}
 	
+	private static GeoJsonFeature rowToFeature(DynaBean row) {			
+		Function<String, String> getString = column -> Optional.ofNullable(row.get(column)).orElse("").toString();
+		
+		GeoJsonObject geometry;
+		try {
+			geometry = MAPPER.readValue(getString.apply("geometry"), GeoJsonObject.class);
+		} catch (IOException e) {
+			LOGGER.warn("Problem mapping geojson geometry", e);
+			return null;
+		}
+		
+		return new GeoJsonFeature(getString.apply("name"), getString.apply("type"),
+				geometry, ((Double) row.get("id")).longValue());
+	}
+	
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public List<GeoJsonFeature> findInRectangle(SearchCriteria criteria) throws SQLException {
 		
 		return dbConn.getStream(SQL_FIND_IN_RECTANGLE, new StatementBinder(criteria))
-				.map(row -> {
-					
-					Function<String, String> getString = column -> Optional.ofNullable(row.get(column)).orElse("").toString();
-					
-					GeoJsonObject geometry;
-					try {
-						geometry = MAPPER.readValue(getString.apply("geometry"), GeoJsonObject.class);
-					} catch (IOException e) {
-						LOGGER.warn("Problem mapping geojson geometry", e);
-						return null;
-					}
-					
-					return new GeoJsonFeature(getString.apply("name"), getString.apply("type"), geometry);
-			
-				})
+				.map(QueryResource::rowToFeature)
+				.filter(g -> g != null)
+				.collect(toList());
+		
+	}
+	
+	@POST
+	@Path("closest")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public List<GeoJsonFeature> findClosest(LatLng center) throws SQLException {
+		
+		return dbConn.getStream(SQL_FIND_CLOSEST, st -> {
+			String point = String.format("POINT(%.8f %.8f)", center.getLng().doubleValue(), center.getLat().doubleValue());
+			st.setString(1, point);
+			st.setString(2, point);
+		})
+				.map(QueryResource::rowToFeature)
 				.filter(g -> g != null)
 				.collect(toList());
 		

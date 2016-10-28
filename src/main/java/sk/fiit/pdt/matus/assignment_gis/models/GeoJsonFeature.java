@@ -29,15 +29,18 @@ public class GeoJsonFeature {
 		
 	}
 	
+	private final long id;
+	
 	private final Properties properties;
 	
 	private final GeoJsonObject geometry;
 
 	public GeoJsonFeature(@JsonProperty("name") String name, @JsonProperty("type") String type,
-			@JsonProperty("geometry") GeoJsonObject geometry) {
+			@JsonProperty("geometry") GeoJsonObject geometry, @JsonProperty("id") long id) {
 		
 		this.properties = new Properties(name, type);
 		this.geometry = geometry;
+		this.id = id;
 	}
 	
 	@JsonProperty
@@ -53,6 +56,11 @@ public class GeoJsonFeature {
 	@JsonProperty
 	public GeoJsonObject getGeometry() {
 		return geometry;
+	}
+
+	@JsonProperty
+	public long getId() {
+		return id;
 	}
 	
 }

@@ -20,11 +20,11 @@ var getRect = function() {
    };
 };
 
-var query = (function() {
+var makeQuery = function(suffix) {
    
    var running = false;
    
-   return function(criteria, handler) {
+   return function(data, handler) {
       if (running) {
          return;
       }
@@ -33,9 +33,9 @@ var query = (function() {
       
       $.ajax({
          type: 'POST',
-         url: '/service/query',
+         url: '/service/query' + suffix,
          contentType: 'application/json',
-         data: JSON.stringify(criteria),
+         data: JSON.stringify(data),
          success: handler,
          complete: function() {
             running = false;
@@ -43,33 +43,44 @@ var query = (function() {
       });
    };
    
-}());
+};
 
-var insertMarkers = (function() {
-   
+var queryRect = makeQuery('');
+var queryClosest = makeQuery('/closest');
+
+var Markers = function(color, weight) {
    var lastMarkers = false;
    
-   return function(data) {
-      
-      var markers = L.geoJSON(data, {
-         color: "#9999cc",
-         weight: 5,
-         opacity: 0.6,
-         onEachFeature: function(feature, layer) {
-            layer.bindPopup(feature.properties.name || 'Untitled ' + (feature.properties.type || ''));
+   return {
+      add: function(data) {
+         var markers = L.geoJSON(data, {
+            color: color,
+            weight: weight,
+            opacity: 0.6,
+            onEachFeature: function(feature, layer) {
+               layer.bindPopup(feature.properties.name || 'Untitled ' + (feature.properties.type || ''));
+            }
+         });
+         this.remove();
+         markers.addTo(map);
+         lastMarkers = markers;
+      },
+      remove: function() {
+         if (lastMarkers) {
+            lastMarkers.removeFrom(map);
          }
-      });
-      
-      if (lastMarkers) {
-         lastMarkers.removeFrom(map);
       }
-      
-      markers.addTo(map);
-      lastMarkers = markers;
-      
    };
-   
-}());
+};
+
+var rectMarkers = new Markers('#9999cc', 5);
+var closestMarkers = new Markers('#33cc33', 10);
+
+var isSame = function(feature1, feature2) {
+   return feature1.id === feature2.id
+         || (feature1.properties.name !== ''
+            && feature1.properties.name === feature2.properties.name);
+};
 
 var refresh = function() {
    var types = $('#filter-types-active').prop('checked')
@@ -82,13 +93,35 @@ var refresh = function() {
                ? $.map($('[name="filter-area"]').val().split(","), parseFloat)
                : false;
    
-   query({
-      rectangle: getRect(),
-      types: types,
-      areaFrom: areaRange ? areaRange[0] : null,
-      areaTo: areaRange ? areaRange[1] : null
-   }, function(data) {
-      insertMarkers(data);
+   queryClosest(map.getCenter(), function(closestData) {
+      queryRect({
+         rectangle: getRect(),
+         types: types,
+         areaFrom: areaRange ? areaRange[0] : null,
+         areaTo: areaRange ? areaRange[1] : null
+      }, function(rectData) {
+         var _closestData = [];
+         var _rectData = [];
+         $.each(rectData, function(j, feature) {
+            for (var i = 0; i < closestData.length; i++) {
+               if (isSame(feature, closestData[i])) {
+                  _closestData.push(feature);
+                  return;
+               }
+            }
+            _rectData.push(feature);
+         });
+         $.each(closestData, function(j, feature) {
+            for (var i = 0; i < _closestData.length; i++) {
+               if (isSame(feature, _closestData[i])) {
+                  return;
+               }
+            }
+            _closestData.push(feature);
+         });
+         rectMarkers.add(_rectData);
+         closestMarkers.add(_closestData);
+      });
    });
 };
 
