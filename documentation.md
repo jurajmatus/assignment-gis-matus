@@ -10,7 +10,7 @@ Queries (? are placeholders for values):
 ```sql
 SELECT id, name, type, ST_AsGeoJson(wkb_geometry) geometry
 FROM geodata
-WHERE (0 = ? OR ST_Intersects(wkb_geometry, ST_MakeEnvelope(?, ?, ?, ?, 4326)))"
+WHERE (0 = ? OR ST_Intersects(wkb_geometry, ST_MakeEnvelope(?, ?, ?, ?, 4326)))
 AND (0 = ? OR type = ANY (?))
 AND (0 = ? OR area >= ?)
 AND (0 = ? OR area <= ?)
