@@ -102,7 +102,7 @@ expected response format:
     * type: string - type of the waterway / waterarea
   * geometry: geojson
 
-**Find waterway / waterarea closest to the center of the viewport
+**Find waterway / waterarea closest to the center of the viewport**
 
 `POST http://localhost:9100/service/query/closest`
 request content type: JSON
@@ -118,7 +118,7 @@ expected response format:
     * type: string - type of the waterway / waterarea
   * geometry: geojson
 
-**Find 10 waterareas with the highest perimeter within the specified distance
+**Find 10 waterareas with the highest perimeter within the specified distance**
 
 `POST http://localhost:9100/service/query/max-perimeter`
 request content type: JSON
