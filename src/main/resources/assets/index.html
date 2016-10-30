@@ -13,15 +13,27 @@
 		
 		<div id="filters">
 			<div class="types">
+				<h3>Filtering by types</h3>
 				<div><label><input type="checkbox" id="filter-types-active" />
 					Show only checked types</label></div>
 				<div id="filter-types-entries"></div>
 			</div>
 			<div class="area">
+				<h3>Filtering by area</h3>
 				<div><label><input type="checkbox" id="filter-area-active" />
 					Show only waterways inside the specified area range</label></div>
 				<div id="filter-area">
-					<input type="range" multiple step="0.00001" name="filter-area" value="0,0" />
+					<span id="filter-area-min"></span>
+					<input type="range" multiple step="1" name="filter-area" value="0,0" />
+					<span id="filter-area-max"></span>
+				</div>
+			</div>
+			<div class="perim-list">
+				<h3>Waterareas by perimeter</h3>
+				<div><label>Maximum distance from the center:
+					<input type="number" id="max-distance" value="5" /> km</label></div>
+				<div id="list-max-perimeter">
+					
 				</div>
 			</div>
 		</div>

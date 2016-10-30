@@ -47,6 +47,7 @@ var makeQuery = function(suffix) {
 
 var queryRect = makeQuery('');
 var queryClosest = makeQuery('/closest');
+var queryMaxPerimeter = makeQuery('/max-perimeter');
 
 var Markers = function(color, weight) {
    var lastMarkers = false;
@@ -74,7 +75,9 @@ var Markers = function(color, weight) {
 };
 
 var rectMarkers = new Markers('#9999cc', 5);
-var closestMarkers = new Markers('#33cc33', 10);
+var closestMarkers = new Markers('#33cc33', 8);
+var linkMarkers = new Markers('#333333', 15);
+var linkDisappearTime = undefined;
 
 var isSame = function(feature1, feature2) {
    return feature1.id === feature2.id
@@ -83,6 +86,10 @@ var isSame = function(feature1, feature2) {
 };
 
 var refresh = function() {
+   var vals = $('[name="filter-area"]').val().split(",");
+   $('#filter-area-min').text(vals[0] + ' m^2');
+   $('#filter-area-max').text(vals[1] + ' m^2');
+   
    var types = $('#filter-types-active').prop('checked')
                ? $.makeArray($('[name="filter-type"]').filter(':checked').map(function() {
                   return $(this).val();
@@ -121,7 +128,44 @@ var refresh = function() {
          });
          rectMarkers.add(_rectData);
          closestMarkers.add(_closestData);
+         if (!linkDisappearTime || ((new Date()).getTime() > linkDisappearTime.getTime())) {
+            linkMarkers.remove();
+         }
       });
+   });
+   
+   var maxDistance = parseFloat($('#max-distance').val());
+   
+   queryMaxPerimeter({
+      maxDistance: maxDistance,
+      center: map.getCenter()
+   }, function(data) {
+      
+      var container = $('#list-max-perimeter');
+      container.children().remove();
+      
+      $.each(data, function(i, feature) {
+         var a = $('<a href="#" />').on('click', function(e) {
+            e.preventDefault();
+            
+            var bbox = feature.geometry.bbox;
+            var lats = [bbox[1], bbox[3]];
+            var lngs = [bbox[0], bbox[2]];
+            
+            map.fitBounds([
+               [Math.min.apply(Math, lats), Math.min.apply(Math, lngs)],
+               [Math.max.apply(Math, lats), Math.max.apply(Math, lngs)]
+            ]);
+            linkMarkers.add(feature);
+            linkDisappearTime = new Date(new Date().getTime() + 10000);
+         }).text(feature.properties.name || 'Untitled water');
+         
+         var row = $('<div />')
+                     .text(' (perimeter: ' + Math.round(feature.perimeter * 100) / 100 + 'm)')
+                     .prepend(a)
+                     .appendTo(container);
+      });
+      
    });
 };
 
@@ -143,19 +187,17 @@ var initFilters = function() {
          }
          
          var area = $('[name="filter-area"]');
-         var vals = [0, 0];
          if (typeof data.minArea === 'number') {
             area.attr('min', data.minArea);
-            vals[0] = data.minArea;
+            area[0].valueLow = data.minArea;
          }
          if (typeof data.maxArea === 'number') {
             area.attr('max', data.maxArea);
-            vals[1] = data.maxArea;
+            area[0].valueHigh = data.maxArea;
          }
-         multirange(area[0]);
-         area.val(vals.join(","));
          
          $('input').on('change', refresh);
+         area.trigger('change');
       }
    });
 };

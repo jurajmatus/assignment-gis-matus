@@ -27,7 +27,8 @@ public class StatisticsResource {
 	
 	private final static String SQL_GET_TYPES = "SELECT DISTINCT(type) FROM geodata";
 	
-	private final static String SQL_GET_AREA_STATS = "SELECT MIN(area) min, MAX(area) max FROM geodata";
+	private final static String SQL_GET_AREA_STATS = "SELECT MIN(ST_Area(ST_TRANSFORM(wkb_geometry, 2163))) min,"
+			+ " MAX(ST_Area(ST_TRANSFORM(wkb_geometry, 2163))) max FROM geodata";
 	
 	@Inject
 	private DbConnection dbConn;
@@ -64,8 +65,8 @@ public class StatisticsResource {
 		ArrayNode typesArray = ret.putArray("types");
 		types.forEach(typesArray::add);
 		
-		ret.put("minArea", minArea * 0.7);
-		ret.put("maxArea", maxArea * 1.3);
+		ret.put("minArea", Math.floor(minArea * 0.8));
+		ret.put("maxArea", Math.ceil(maxArea * 1.2));
 		
 		return ret;
 	}

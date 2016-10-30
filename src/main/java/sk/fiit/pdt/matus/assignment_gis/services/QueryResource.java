@@ -21,12 +21,15 @@ import org.geojson.GeoJsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import static java.util.stream.Collectors.toList;
 
 import sk.fiit.pdt.matus.assignment_gis.db.DbConnection;
 import sk.fiit.pdt.matus.assignment_gis.db.DbConnection.SQLValueBinder;
+import sk.fiit.pdt.matus.assignment_gis.models.DistanceRestriction;
 import sk.fiit.pdt.matus.assignment_gis.models.GeoJsonFeature;
 import sk.fiit.pdt.matus.assignment_gis.models.LatLng;
 import sk.fiit.pdt.matus.assignment_gis.models.Rectangle;
@@ -47,12 +50,19 @@ public class QueryResource {
 	private final static String SQL_FIND_IN_RECTANGLE = SQL_BASE_SELECT
 			+ " (0 = ? OR ST_Intersects(wkb_geometry, ST_MakeEnvelope(?, ?, ?, ?, 4326)))"
 			+ " AND (0 = ? OR type = ANY (?))"
-			+ " AND (0 = ? OR area >= ?)"
-			+ " AND (0 = ? OR area <= ?)";
+			+ " AND (0 = ? OR ST_Area(ST_TRANSFORM(wkb_geometry, 2163)) >= ?)"
+			+ " AND (0 = ? OR ST_Area(ST_TRANSFORM(wkb_geometry, 2163)) <= ?)";
 	
 	private final static String SQL_FIND_CLOSEST = SQL_BASE_SELECT
 			+ " ST_Distance(wkb_geometry, ST_GeomFromText(?, 4326))"
 			+ " = (SELECT MIN(ST_Distance(wkb_geometry, ST_GeomFromText(?, 4326))) FROM geodata)";
+	
+	private final static String SQL_FIND_WITH_HIGHEST_PERMIETER = "WITH perimeters AS ("
+			+ SQL_BASE_SELECT.replaceFirst("id", "id, ST_Perimeter(ST_TRANSFORM(wkb_geometry, 2163)) perimeter")
+							.replaceFirst("ST_AsGeoJson\\(wkb_geometry\\)", "ST_AsGeoJson(wkb_geometry, 13, 1)")
+			+ " ST_Distance(ST_TRANSFORM(wkb_geometry, 2163), ST_TRANSFORM(ST_GeomFromText(?, 4326), 2163)) / 1000 <= ?"
+			+ ") "
+			+ "SELECT * FROM perimeters WHERE perimeter > 0 ORDER BY perimeter DESC LIMIT 10";
 	
 	@Inject
 	private DbConnection dbConn;
@@ -158,9 +168,34 @@ public class QueryResource {
 			st.setString(1, point);
 			st.setString(2, point);
 		})
-				.map(QueryResource::rowToFeature)
-				.filter(g -> g != null)
-				.collect(toList());
+		.map(QueryResource::rowToFeature)
+		.filter(g -> g != null)
+		.collect(toList());
+		
+	}
+	
+	@POST
+	@Path("max-perimeter")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public List<JsonNode> getWithHighestPerimeter(DistanceRestriction dist) throws SQLException {
+		
+		return dbConn.getStream(SQL_FIND_WITH_HIGHEST_PERMIETER, st -> {
+			String point = String.format("POINT(%.8f %.8f)", dist.getCenter().getLng().doubleValue(),
+					dist.getCenter().getLat().doubleValue());
+			st.setString(1, point);
+			st.setDouble(2, dist.getMaxDistance());
+		})
+		.map(row -> {
+			GeoJsonFeature feature = rowToFeature(row);
+			ObjectNode richFeature = MAPPER.valueToTree(feature);
+			
+			richFeature.put("perimeter", (double) row.get("perimeter"));
+			
+			return richFeature;
+		})
+		.filter(g -> g != null)
+		.collect(toList());
 		
 	}
 

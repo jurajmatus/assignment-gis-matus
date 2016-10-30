@@ -4,25 +4,42 @@ This application shows waterways and waterareas in the west of Slovakia on a map
 * displaying all waterways / waterereas in the viewport by blue color
   * possibility of filtering by area or waterway / waterarea type
 * displaying the closest waterway / waterarea to the center of the map by green color
-* (TODO) displaying the list of the ten waterways / waterareas with the highest perimeter
+* displaying the list of the ten waterareas with the highest perimeter
   * possibility to limit the distance of search
-  * clicking on the item will display the waterway / waterarea on the map
+  * clicking on the item will display the waterarea on the map and highlight it by black color
 
 Queries (? are placeholders for values):
 ```sql
+-- Use cases
+
 SELECT id, name, type, ST_AsGeoJson(wkb_geometry) geometry
 FROM geodata
 WHERE (0 = ? OR ST_Intersects(wkb_geometry, ST_MakeEnvelope(?, ?, ?, ?, 4326)))
 AND (0 = ? OR type = ANY (?))
-AND (0 = ? OR area >= ?)
-AND (0 = ? OR area <= ?)
+AND (0 = ? OR ST_Area(ST_TRANSFORM(wkb_geometry, 2163)) >= ?)
+AND (0 = ? OR ST_Area(ST_TRANSFORM(wkb_geometry, 2163)) <= ?)
 
 SELECT id, name, type, ST_AsGeoJson(wkb_geometry) geometry
 FROM geodata
 ST_Distance(wkb_geometry, ST_GeomFromText(?, 4326))
  = (SELECT MIN(ST_Distance(wkb_geometry, ST_GeomFromText(?, 4326))) FROM geodata)
  
-(TODO) add query use case 3
+WITH perimeters AS (
+  SELECT id, ST_Perimeter(ST_TRANSFORM(wkb_geometry, 2163)) perimeter,
+         name, type, ST_AsGeoJson(wkb_geometry, 13, 1) geometry
+  FROM geodata
+  WHERE ST_Distance(ST_TRANSFORM(wkb_geometry, 2163), ST_TRANSFORM(ST_GeomFromText(?, 4326), 2163)) / 1000 <= ?
+)
+SELECT * FROM perimeters WHERE perimeter > 0 ORDER BY perimeter DESC LIMIT 10
+
+-- Statistics
+
+SELECT DISTINCT(type) FROM geodata
+
+SELECT MIN(ST_Area(ST_TRANSFORM(wkb_geometry, 2163))) min,
+       MAX(ST_Area(ST_TRANSFORM(wkb_geometry, 2163))) max
+FROM geodata
+
 ```
 
 This is it in action:

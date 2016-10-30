@@ -9,7 +9,7 @@
    width: 70%;
 }
 
-.types, .area {
+.types, .area, .perim-list {
    display: inline-block;
    vertical-align: top;
    width: auto;
