@@ -102,11 +102,46 @@ expected response format:
     * type: string - type of the waterway / waterarea
   * geometry: geojson
 
+**Find waterway / waterarea closest to the center of the viewport
+
+`POST http://localhost:9100/service/query/closest`
+request content type: JSON
+expected request format:
+* lat: double - lattitude
+* lng: double - longitude
+response content type: JSON
+expected response format:
+* array
+  * type: string = "Feature"
+  * properties
+    * name: string - name of the waterway / waterarea
+    * type: string - type of the waterway / waterarea
+  * geometry: geojson
+
+**Find 10 waterareas with the highest perimeter within the specified distance
+
+`POST http://localhost:9100/service/query/max-perimeter`
+request content type: JSON
+expected request format:
+* center
+  * lat: double - lattitude
+  * lng: double - longitude
+* distance: double - distance of search
+response content type: JSON
+expected response format:
+* array
+  * type: string = "Feature"
+  * properties
+    * name: string - name of the waterway / waterarea
+    * type: string - type of the waterway / waterarea
+  * geometry: geojson (including bbox)
+  * perimeter: double - perimeter in meters
+
 **Get statistics**
 
 `GET http://localhost:9100/service/stats/all`
 response content type: JSON
 expected response format:
 * types: array[string] - all possible waterway / waterarea types
-* minArea: double - the lowest area found across all waterways / waterareas
-* maxArea: double - the highest area found across all waterways / waterareas
+* minArea: double - the lowest area (in kilometers) found across all waterways / waterareas
+* maxArea: double - the highest area (in kilometers) found across all waterways / waterareas

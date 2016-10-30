@@ -65,8 +65,8 @@ public class StatisticsResource {
 		ArrayNode typesArray = ret.putArray("types");
 		types.forEach(typesArray::add);
 		
-		ret.put("minArea", Math.floor(minArea * 0.8));
-		ret.put("maxArea", Math.ceil(maxArea * 1.2));
+		ret.put("minArea", minArea);
+		ret.put("maxArea", maxArea);
 		
 		return ret;
 	}

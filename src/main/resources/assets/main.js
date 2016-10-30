@@ -188,10 +188,12 @@ var initFilters = function() {
          
          var area = $('[name="filter-area"]');
          if (typeof data.minArea === 'number') {
+            data.minArea = Math.floor(data.minArea);
             area.attr('min', data.minArea);
             area[0].valueLow = data.minArea;
          }
          if (typeof data.maxArea === 'number') {
+            data.maxArea = Math.ceil(data.maxArea * 1.2);
             area.attr('max', data.maxArea);
             area[0].valueHigh = data.maxArea;
          }
