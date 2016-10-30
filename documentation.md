@@ -4,7 +4,9 @@ This application shows waterways and waterareas in the west of Slovakia on a map
 * displaying all waterways / waterereas in the viewport by blue color
   * possibility of filtering by area or waterway / waterarea type
 * displaying the closest waterway / waterarea to the center of the map by green color
-* (TODO) add 1 more
+* (TODO) displaying the list of the ten waterways / waterareas with the highest perimeter
+  * possibility to limit the distance of search
+  * clicking on the item will display the waterway / waterarea on the map
 
 Queries (? are placeholders for values):
 ```sql
@@ -19,9 +21,9 @@ SELECT id, name, type, ST_AsGeoJson(wkb_geometry) geometry
 FROM geodata
 ST_Distance(wkb_geometry, ST_GeomFromText(?, 4326))
  = (SELECT MIN(ST_Distance(wkb_geometry, ST_GeomFromText(?, 4326))) FROM geodata)
+ 
+(TODO) add query use case 3
 ```
-
-(TODO) add SQL queries
 
 This is it in action:
 
